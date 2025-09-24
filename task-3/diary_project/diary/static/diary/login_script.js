@@ -2,7 +2,6 @@ const form = document.getElementById('loginForm');
 const errorMsg = document.getElementById('errorMsg');
 
 form.addEventListener('submit', function(event) {
-    event.preventDefault();
 
     const username = form.username.value.trim();
     const password = form.password.value.trim();

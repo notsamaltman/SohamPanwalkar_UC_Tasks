@@ -12,6 +12,6 @@ class CustomUser(AbstractUser):
     gender = models.CharField(max_length=10, choices=GENDER_CHOICES, null=True, blank=True)
     
     email = models.EmailField(unique=True)  
-
+    verification_code = models.CharField(max_length=6, null=True)
     def __str__(self):
         return self.username
