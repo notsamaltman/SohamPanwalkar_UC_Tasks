@@ -1,0 +1,85 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Diary - MyDiary</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="shortcut icon" href="https://cdn-icons-png.flaticon.com/512/6919/6919207.png" type="image/x-icon">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+</head>
+<body class="bg-gray-900 text-gray-200 min-h-screen flex flex-col">
+
+    <!-- Navbar -->
+    <nav class="bg-gray-800 text-white px-6 py-4 flex justify-between items-center shadow-md">
+        <h1 class="text-2xl font-bold">MyDiary</h1>
+        <a href="{% url 'home' %}" 
+           class="bg-indigo-500 hover:bg-indigo-600 px-4 py-2 rounded-lg shadow text-white font-semibold transition">
+            🏠 Home
+        </a>
+    </nav>
+
+    <!-- Create Diary Form -->
+    <main class="flex-grow flex justify-center items-start p-6">
+        <div class="bg-gray-800 w-full max-w-2xl p-8 rounded-2xl shadow-lg mt-10">
+            <h2 class="text-3xl font-bold text-center mb-6 text-white">Create New Diary</h2>
+
+            <form id="createDiaryForm" class="space-y-6">
+                <div>
+                    <label for="title" class="block mb-1">Title</label>
+                    <input type="text" id="title" name="title" required
+                           class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"/>
+                </div>
+                <div>
+                    <label for="body" class="block mb-1">Body</label>
+                    <textarea id="body" name="body" rows="6" required
+                              class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                </div>
+
+                <div id="errorMsg" class="text-red-500 text-sm hidden"></div>
+
+                <button type="submit"
+                        class="w-full bg-indigo-500 hover:bg-indigo-600 transition duration-200 py-2 rounded text-white font-semibold">
+                    Add Diary
+                </button>
+            </form>
+        </div>
+    </main>
+
+    <script>
+        const form = document.getElementById('createDiaryForm');
+        const errorMsg = document.getElementById('errorMsg');
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const title = form.title.value.trim();
+            const body = form.body.value.trim();
+
+            if (!title || !body) {
+                errorMsg.textContent = "Both fields are required.";
+                errorMsg.classList.remove('hidden');
+                return;
+            }
+
+            const response = await fetch("{% url 'new_diary' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ title, body })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                window.location.href = "{% url 'home' %}";
+            } else {
+                errorMsg.textContent = data.error;
+                errorMsg.classList.remove('hidden');
+            }
+        });
+    </script>
+
+</body>
+</html>

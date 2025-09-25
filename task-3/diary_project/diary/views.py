@@ -1,21 +1,17 @@
 import random
 import json
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseForbidden
 from django.core.mail import send_mail
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login as auth_login
+from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
-from .models import CustomUser
+from .models import CustomUser, Diary
 from django.views.decorators.csrf import csrf_exempt
 
 @csrf_exempt
 def login(request):
     return render(request, 'diary/diary_template.html')
-
-@csrf_exempt
-@login_required(login_url='/login/')
-def home(request):
-    return render(request, 'diary/diary_home.html')
 
 def register(request):
     return render(request, 'diary/diary_register.html')
@@ -123,3 +119,51 @@ def login_user(request):
 
     return JsonResponse({'success': False, 'error': 'Invalid request'})
 
+@login_required
+@csrf_exempt
+def home(request):
+    diaries = Diary.objects.filter(created_by=request.user)
+    return render(request, "diary/diary_home.html", {"diaries": diaries})
+
+@login_required
+@csrf_exempt
+def new_diary(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        title = data.get("title")
+        body = data.get("body")
+
+        if title and body:
+            Diary.objects.create(
+                title=title,
+                body=body,
+                created_by=request.user
+            )
+            return JsonResponse({"success":True})
+
+    return render(request, "diary/diary_new.html")
+
+
+@login_required
+@csrf_exempt
+def view_diary(request, diary_id):
+    diary = get_object_or_404(Diary, id=diary_id, created_by=request.user)
+    return render(request, "diary/diary_view.html", {"diary": diary})
+
+
+@login_required
+@csrf_exempt
+def delete_diary(request, diary_id):
+    diary = get_object_or_404(Diary, id=diary_id, created_by=request.user)
+
+    if request.method == "POST":
+        diary.delete()
+        return JsonResponse({'success':True})
+
+    return HttpResponseForbidden("Not allowed")
+
+@csrf_exempt
+@login_required
+def logout_view(request):
+    logout(request)
+    return JsonResponse({'success':True})
