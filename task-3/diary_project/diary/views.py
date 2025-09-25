@@ -3,15 +3,27 @@ import json
 from django.http import JsonResponse
 from django.core.mail import send_mail
 from django.shortcuts import render, redirect
-from django.contrib import messages
+from django.contrib.auth import authenticate, login as auth_login
+from django.contrib.auth.decorators import login_required
 from .models import CustomUser
 from django.views.decorators.csrf import csrf_exempt
 
+@csrf_exempt
 def login(request):
     return render(request, 'diary/diary_template.html')
 
+@csrf_exempt
+@login_required(login_url='/login/')
+def home(request):
+    return render(request, 'diary/diary_home.html')
+
 def register(request):
     return render(request, 'diary/diary_register.html')
+
+def verify_code_page(request):
+    if 'user_id' not in request.session:
+        return redirect('register')
+    return render(request, 'diary/diary_verifyemail.html')
 
 @csrf_exempt
 def register_user(request):
@@ -60,30 +72,54 @@ def register_user(request):
         )
 
         request.session['user_id'] = user.id  
-        return redirect('diary_verifyemail.html')
+        return JsonResponse({'success':True})
 
     return render(request, 'register.html')
-
+@csrf_exempt
 def verify_code(request):
     if request.method == "POST":
-        email = request.POST.get("email")
-        entered_code = request.POST.get("code")
+        data = json.loads(request.body)
+        entered_code = data.get("code")
+        email=data.get("email")
+        if not email:
+            return JsonResponse({'success': False, 'error': 'Session expired. Please register again.'})
 
         try:
-            user = CustomUser.objects.get(email=email)
+            user = CustomUser.objects.get(email=email)  
         except CustomUser.DoesNotExist:
-            messages.error(request, "User not found.")
-            return redirect("diary_verifyemail.html")
+            return JsonResponse({'success': False, 'error': 'User does not exist'})
 
         if user.verification_code == entered_code:
             user.is_active = True
             user.verification_code = None
             user.save()
-            messages.success(request, "Email verified! You can now log in.")
-            return redirect("login")
+            return JsonResponse({'success': True, 'message': 'Email verified!'})
         else:
-            messages.error(request, "Invalid verification code.")
-            return redirect("diary_verifyemail.html")
+            return JsonResponse({'success': False, 'error': 'Invalid code!'})
 
-    return render(request, "diary_verifyemail.html")
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+@csrf_exempt
+def login_user(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            username = data.get("username")
+            password = data.get("password")
+        except json.JSONDecodeError:
+            return JsonResponse({'success': False, 'error': 'Invalid JSON'})
+
+        if not username or not password:
+            return JsonResponse({'success': False, 'error': 'All fields are required'})
+
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            if user.is_active:
+                auth_login(request, user)
+                return JsonResponse({'success': True, 'username': user.username})
+            else:
+                return JsonResponse({'success': False, 'error': 'Account not verified'})
+        else:
+            return JsonResponse({'success': False, 'error': 'Invalid username or password'})
+
+    return JsonResponse({'success': False, 'error': 'Invalid request'})
 

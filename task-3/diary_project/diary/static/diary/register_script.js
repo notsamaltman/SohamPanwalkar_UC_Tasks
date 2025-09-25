@@ -39,11 +39,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         const data = await response.json();
         if(data.success){
-            alert("Registration successful!");
-            window.location.href = '/login/';
+            alert("we are redirecting you to verify your email!");
+            sessionStorage.setItem("email", email);
+            window.location.href = '/verify_user_page/';
         }
         else{
-            alert("Registration failed: " + data.console.error());
+            alert("Registration failed: " + data.error);
         }
         return;
     });

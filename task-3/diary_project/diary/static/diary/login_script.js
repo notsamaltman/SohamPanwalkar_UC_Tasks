@@ -1,25 +1,33 @@
-const form = document.getElementById('loginForm');
-const errorMsg = document.getElementById('errorMsg');
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('loginForm'); 
+    const errorMsg = document.getElementById('errorMsg'); 
 
-form.addEventListener('submit', function(event) {
+    form.addEventListener('submit', async function(event) {
+        event.preventDefault(); 
 
-    const username = form.username.value.trim();
-    const password = form.password.value.trim();
+        const username = form.username.value.trim();
+        const password = form.password.value.trim();
 
-    // Example validation logic
-    if (username === "" || password === "") {
-        errorMsg.textContent = "Both fields are required.";
-        errorMsg.classList.remove('hidden');
-        return;
-    }
+        if (!username || !password) {
+            errorMsg.textContent = "Both fields are required.";
+            errorMsg.classList.remove('hidden');
+            return;
+        }
 
-    if (username !== "user" || password !== "password") {
-        errorMsg.textContent = "Invalid credentials.";
-        errorMsg.classList.remove('hidden');
-        return;
-    }
+        const response = await fetch('/login_user/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username, password })
+        });
 
-    errorMsg.classList.add('hidden');
-    alert("Login successful!");
-   
+        const data = await response.json();
+        if (data.success) {
+            window.location.href = '/home/';
+        } else {
+            errorMsg.textContent = data.error;
+            errorMsg.classList.remove('hidden');
+        }
+    });
 });
