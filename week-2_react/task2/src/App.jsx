@@ -4,12 +4,12 @@ import Leaderboard from './Leaderboard';
 import './App.css'
 
 function App() {
-  const [count, setCount] = useState(0)
 
   return (
     <>
       <Router>
         <Routes>
+          <Route path='/' element={<Leaderboard/>}/>
           <Route path='/leaderboard' element={<Leaderboard/>}/>
         </Routes>
       </Router>

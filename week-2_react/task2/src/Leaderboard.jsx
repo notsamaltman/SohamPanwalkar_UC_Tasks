@@ -1,13 +1,33 @@
-import React from "react";
+import { useEffect, useState } from "react";
+
+const SHEET_ID = "1pAc8AlCdPFduk1cblYitu9fz3eg8_05OfFsQg2GF48I";
+const API_KEY = "AIzaSyAFRrPi7543HhKRsSkID9F-H9oHVv5sm0k";
+const RANGE = "Sheet1!A1:D";
 
 export default function Leaderboard() {
-  const dummyData = [
-    { name: "Soham", score: 98 },
-    { name: "Aarav", score: 95 },
-    { name: "Mira", score: 92 },
-    { name: "Kabir", score: 88 },
-    { name: "Riya", score: 85 },
-  ];
+
+  const [users, setUsers] = useState([]);
+
+  function updateLeaderBoard(){
+  fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${RANGE}?key=${API_KEY}`)
+    .then(res => res.json())      
+    .then(data => {               
+      if (data.values) {
+        const formatted = data.values.slice(1).map(row => ({
+          name: row[0],
+          score: row[1],
+        }));
+        setUsers(formatted);      
+      }
+    })
+    .catch(err => console.error(err));
+}
+
+
+ useEffect(() => {
+  setInterval(updateLeaderBoard, 5000);
+}, []);
+
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 text-white flex flex-col items-center p-6">
@@ -16,7 +36,7 @@ export default function Leaderboard() {
       </h1>
 
       <div className="w-full max-w-2xl flex flex-col space-y-4">
-        {dummyData.map((user, index) => (
+        {users.map((user, index) => (
           <div
             key={index}
             className={`flex justify-between items-center px-6 py-4 rounded-2xl shadow-md transition-all duration-300 
@@ -36,4 +56,5 @@ export default function Leaderboard() {
 
     </div>
   );
+  
 }
